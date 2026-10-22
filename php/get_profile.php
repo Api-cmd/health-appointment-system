@@ -5,7 +5,7 @@ if (!is_logged_in()) send_json(['error' => 'Not logged in.'], 401);
 
 try {
     $stmt = $pdo->prepare("
-        SELECT user_id, full_name, email, phone, role, created_at
+        SELECT user_id, full_name, phone, email, role, created_at
         FROM users WHERE user_id=?
     ");
     $stmt->execute([$_SESSION['user_id']]);

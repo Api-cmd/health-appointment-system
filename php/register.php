@@ -17,8 +17,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 // --- Collect and clean inputs ---
 $full_name = clean($_POST['full_name'] ?? '');
-$email     = clean($_POST['email']     ?? '');
 $phone     = clean($_POST['phone']     ?? '');
+$email     = clean($_POST['email']     ?? '');  // Optional now
 $password  =       $_POST['password']  ?? '';  // don't strip from password
 $confirm   =       $_POST['confirm']   ?? '';
 
@@ -31,9 +31,9 @@ if (strlen($full_name) < 2) {
     $errors[] = 'Full name is required.';
 }
 
-// Email: must be a valid email format
-if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    $errors[] = 'Enter a valid email address.';
+// Email: optional, but if provided must be valid
+if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    $errors[] = 'Enter a valid email address or leave it blank.';
 }
 
 // Phone: digits, spaces, dashes, and + allowed. Min 9 characters.
@@ -52,14 +52,14 @@ if ($password !== $confirm) {
     $errors[] = 'Passwords do not match.';
 }
 
-// --- Check if email is already registered ---
+// --- Check if phone is already registered ---
 // We only do this check if other validation passed,
 // to avoid unnecessary database queries.
 if (empty($errors)) {
-    $stmt = $pdo->prepare("SELECT user_id FROM users WHERE email = ?");
-    $stmt->execute([$email]);
+    $stmt = $pdo->prepare("SELECT user_id FROM users WHERE phone = ?");
+    $stmt->execute([$phone]);
     if ($stmt->fetch()) {
-        $errors[] = 'That email is already registered.';
+        $errors[] = 'That phone number is already registered.';
     }
 }
 
@@ -80,13 +80,13 @@ $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 
 // --- Insert the new user into the database ---
 $stmt = $pdo->prepare("
-    INSERT INTO users (full_name, email, phone, password, role)
-    VALUES (:name, :email, :phone, :password, 'patient')
+    INSERT INTO users (full_name, phone, email, password, role)
+    VALUES (:name, :phone, :email, :password, 'patient')
 ");
 $stmt->execute([
     ':name'     => $full_name,
-    ':email'    => $email,
     ':phone'    => $phone,
+    ':email'    => $email ?: 'no-email@hams.local',
     ':password' => $hashed_password,
 ]);
 
@@ -97,7 +97,7 @@ $user_id = $pdo->lastInsertId();
 $_SESSION['user_id']   = $user_id;
 $_SESSION['user_name'] = $full_name;
 $_SESSION['user_role'] = 'patient';
-$_SESSION['user_email'] = $email;
+$_SESSION['user_phone'] = $phone;
 $_SESSION['login_ip']   = $_SERVER['REMOTE_ADDR'];
 
 // Regenerate session ID to prevent session fixation

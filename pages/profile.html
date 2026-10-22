@@ -69,12 +69,12 @@
               <div style="font-weight:600;" id="disp-name"></div>
             </div>
             <div>
-              <div class="text-muted text-sm">Email Address</div>
-              <div id="disp-email"></div>
-            </div>
-            <div>
               <div class="text-muted text-sm">Phone Number</div>
               <div id="disp-phone"></div>
+            </div>
+            <div>
+              <div class="text-muted text-sm">Email Address (Optional)</div>
+              <div id="disp-email"></div>
             </div>
             <div>
               <div class="text-muted text-sm">Account Role</div>
@@ -90,12 +90,12 @@
             <input type="text" id="f-name" class="form-control">
           </div>
           <div class="form-group">
-            <label for="f-email">Email Address</label>
-            <input type="email" id="f-email" class="form-control">
-          </div>
-          <div class="form-group">
             <label for="f-phone">Phone Number</label>
             <input type="tel" id="f-phone" class="form-control">
+          </div>
+          <div class="form-group">
+            <label for="f-email">Email Address (Optional)</label>
+            <input type="email" id="f-email" class="form-control">
           </div>
           <div style="display:flex; gap:10px; margin-top:4px;">
             <button class="btn btn-primary" id="save-info-btn"
@@ -205,15 +205,15 @@
 
         // Populate read-only display
         document.getElementById('disp-name').textContent  = userData.full_name;
-        document.getElementById('disp-email').textContent = userData.email;
         document.getElementById('disp-phone').textContent = userData.phone;
+        document.getElementById('disp-email').textContent = userData.email || 'Not provided';
         document.getElementById('disp-role').innerHTML    =
           `<span class="badge badge-confirmed">${userData.role}</span>`;
 
         // Pre-fill the edit form inputs
         document.getElementById('f-name').value  = userData.full_name;
-        document.getElementById('f-email').value = userData.email;
         document.getElementById('f-phone').value = userData.phone;
+        document.getElementById('f-email').value = userData.email || '';
 
       } catch (err) {
         document.getElementById('info-loading').style.display = 'none';
@@ -244,8 +244,8 @@
       const email = document.getElementById('f-email').value.trim();
       const phone = document.getElementById('f-phone').value.trim();
 
-      if (!name || !email || !phone) {
-        showAlert('All fields are required.', 'error');
+      if (!name || !phone) {
+        showAlert('Name and phone are required.', 'error');
         return;
       }
 

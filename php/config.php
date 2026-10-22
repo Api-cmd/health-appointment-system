@@ -152,11 +152,11 @@ function minutes_to_time(int $minutes): string {
 
 /**
  * Check login rate limits to prevent brute force and credential stuffing attacks.
- * Checks both IP address and email address.
+ * Checks both IP address and phone number.
  *
- * @param string|null $email Email to check (optional but recommended)
+ * @param string|null $phone Phone number to check (optional but recommended)
  */
-function check_login_rate_limit(?string $email = null): void {
+function check_login_rate_limit(?string $phone = null): void {
     global $pdo;
     $ip = $_SERVER['REMOTE_ADDR'];
 
@@ -176,26 +176,26 @@ function check_login_rate_limit(?string $email = null): void {
         ], 429);
     }
 
-    // --- Email-based rate limiting (protects individual accounts) ---
-    if ($email && !empty($email)) {
+    // --- Phone-based rate limiting (protects individual accounts) ---
+    if ($phone && !empty($phone)) {
         $stmt = $pdo->prepare("
             SELECT COUNT(*) FROM login_attempts
-            WHERE email = ? 
+            WHERE phone = ? 
             AND success = 0
             AND attempted_at > DATE_SUB(NOW(), INTERVAL 600 SECOND)
         ");
-        $stmt->execute([$email]);
-        $email_attempts = (int)$stmt->fetchColumn();
+        $stmt->execute([$phone]);
+        $phone_attempts = (int)$stmt->fetchColumn();
 
-        if ($email_attempts >= 5) {
+        if ($phone_attempts >= 5) {
             send_json([
                 'error' => 'Too many failed attempts for this account. Please try again in 10 minutes.'
             ], 429);
         }
 
         // Progressive delay to slow down brute force tools
-        if ($email_attempts >= 3) {
-            $delay = min($email_attempts - 2, 5); // 1 to 5 seconds
+        if ($phone_attempts >= 3) {
+            $delay = min($phone_attempts - 2, 5); // 1 to 5 seconds
             sleep($delay);
         }
     }
@@ -204,18 +204,18 @@ function check_login_rate_limit(?string $email = null): void {
 /**
  * Record every login attempt (success or failure) in the database.
  *
- * @param string $email   Email used in attempt
+ * @param string $phone   Phone number used in attempt
  * @param bool   $success True if login was successful
  */
-function record_login_attempt(string $email, bool $success): void {
+function record_login_attempt(string $phone, bool $success): void {
     global $pdo;
     $ip = $_SERVER['REMOTE_ADDR'];
 
     $stmt = $pdo->prepare("
-        INSERT INTO login_attempts (ip_address, email, success, attempted_at)
+        INSERT INTO login_attempts (ip_address, phone, success, attempted_at)
         VALUES (?, ?, ?, NOW())
     ");
-    $stmt->execute([$ip, $email, $success ? 1 : 0]);
+    $stmt->execute([$ip, $phone, $success ? 1 : 0]);
 
     // Cleanup old records (10% chance on every attempt to avoid performance impact)
     if (mt_rand(1, 100) <= 10) {
@@ -227,7 +227,7 @@ function record_login_attempt(string $email, bool $success): void {
 }
 
 /**
- * Detect suspicious behavior (one IP trying many different emails).
+ * Detect suspicious behavior (one IP trying many different phones).
  *
  * @return bool
  */
@@ -236,33 +236,33 @@ function is_suspicious_ip(): bool {
     $ip = $_SERVER['REMOTE_ADDR'];
 
     $stmt = $pdo->prepare("
-        SELECT COUNT(DISTINCT email) as unique_emails
+        SELECT COUNT(DISTINCT phone) as unique_phones
         FROM login_attempts
         WHERE ip_address = ?
         AND success = 0
         AND attempted_at > DATE_SUB(NOW(), INTERVAL 300 SECOND)
-        AND email IS NOT NULL AND email != ''
+        AND phone IS NOT NULL AND phone != ''
     ");
     $stmt->execute([$ip]);
     $result = $stmt->fetch();
 
-    return ($result && $result['unique_emails'] > 5);
+    return ($result && $result['unique_phones'] > 5);
 }
 
 /**
- * Clear old failed attempts for a specific email after successful login.
+ * Clear old failed attempts for a specific phone after successful login.
  * Helps maintain clean records.
  *
- * @param string $email
+ * @param string $phone
  */
-function cleanup_old_attempts(string $email): void {
+function cleanup_old_attempts(string $phone): void {
     global $pdo;
     $pdo->prepare("
         DELETE FROM login_attempts 
-        WHERE email = ? 
+        WHERE phone = ? 
         AND success = 0 
         AND attempted_at < DATE_SUB(NOW(), INTERVAL 1 DAY)
-    ")->execute([$email]);
+    ")->execute([$phone]);
 }
 ?>
 

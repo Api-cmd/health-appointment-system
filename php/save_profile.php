@@ -38,27 +38,27 @@ $name  = clean($body['name']  ?? '');
 $email = clean($body['email'] ?? '');
 $phone = clean($body['phone'] ?? '');
 
-if (!$name || !$email || !$phone) {
-    send_json(['error' => 'All fields are required.'], 400);
+if (!$name || !$phone) {
+    send_json(['error' => 'Name and phone are required.'], 400);
 }
 
-if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
     send_json(['error' => 'Invalid email address.'], 400);
 }
 
-// Check email not taken by another user
-$check = $pdo->prepare("SELECT user_id FROM users WHERE email=? AND user_id != ?");
-$check->execute([$email, $uid]);
+// Check phone not taken by another user
+$check = $pdo->prepare("SELECT user_id FROM users WHERE phone=? AND user_id != ?");
+$check->execute([$phone, $uid]);
 if ($check->fetch()) {
-    send_json(['error' => 'That email is already in use.'], 409);
+    send_json(['error' => 'That phone number is already in use.'], 409);
 }
 
-$pdo->prepare("UPDATE users SET full_name=?, email=?, phone=? WHERE user_id=?")
-    ->execute([$name, $email, $phone, $uid]);
+$pdo->prepare("UPDATE users SET full_name=?, phone=?, email=? WHERE user_id=?")
+    ->execute([$name, $phone, $email ?: 'no-email@hams.local', $uid]);
 
 // Update session name so navbar reflects the change immediately
 $_SESSION['user_name']  = $name;
-$_SESSION['user_email'] = $email;
+$_SESSION['user_phone'] = $phone;
 
 send_json(['success' => true]);
 ?>

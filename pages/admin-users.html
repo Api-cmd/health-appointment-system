@@ -165,7 +165,7 @@
             <div class="input-icon-wrap" style="flex:1; min-width:200px;">
               <i class="fa-solid fa-magnifying-glass icon"></i>
               <input type="text" id="search-input" class="form-control"
-                     placeholder="Search by name or email..."
+                     placeholder="Search by name or phone..."
                      oninput="filterTable()">
             </div>
             <select id="role-filter" class="form-control" style="width:160px;"
@@ -194,8 +194,8 @@
                   <tr>
                     <th>#</th>
                     <th>Name</th>
-                    <th>Email</th>
                     <th>Phone</th>
+                    <th>Email (Optional)</th>
                     <th>Role</th>
                     <th>Status</th>
                     <th>Registered</th>
@@ -246,7 +246,7 @@
         </div>
 
         <div class="form-group">
-          <label for="m-email">Email Address</label>
+          <label for="m-email">Email Address (Optional)</label>
           <input type="email" id="m-email" class="form-control" placeholder="email@example.com">
         </div>
 
@@ -347,8 +347,8 @@
         tr.innerHTML = `
           <td class="text-muted">${i + 1}</td>
           <td>${escapeHtml(u.full_name)}</td>
-          <td>${escapeHtml(u.email)}</td>
           <td>${escapeHtml(u.phone)}</td>
+          <td>${escapeHtml(u.email || '-')}</td>
           <td><span class="badge badge-confirmed">${escapeHtml(u.role)}</span></td>
           <td>
             <span class="badge ${u.is_active == 1 ? 'badge-seen' : 'badge-cancelled'}">
@@ -379,9 +379,10 @@
       const role   = document.getElementById('role-filter').value;
 
       const filtered = allUsers.filter(u => {
-        // Check if name or email contains the search text
+        // Check if name or phone contains the search text
         const matchText = u.full_name.toLowerCase().includes(search) ||
-                          u.email.toLowerCase().includes(search);
+                          u.phone.toLowerCase().includes(search) ||
+                          (u.email && u.email.toLowerCase().includes(search));
         // Check if role matches the filter dropdown
         const matchRole = role ? u.role === role : true;
         return matchText && matchRole;
@@ -439,8 +440,8 @@
       const alertBox = document.getElementById('modal-alert');
 
       // Basic validation
-      if (!name || !email || !phone) {
-        alertBox.textContent   = 'Name, email, and phone are required.';
+      if (!name || !phone) {
+        alertBox.textContent   = 'Name and phone are required.';
         alertBox.style.display = 'block';
         return;
       }

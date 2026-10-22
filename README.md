@@ -1,182 +1,109 @@
-NOTE there are features that i add but not in read me the admin schedule 
- 
- # HAMS2 - Hospital Appointment Management System (Simplified)
+# Health Appointment System (HAMS2)
 
-A simplified online appointment booking system with only **Patient** and **Admin** roles. Unlike the original HAMS system, HAMS2 does not have doctor login - appointments are booked by department instead.
+A web-based hospital appointment booking system built with plain **PHP + MySQL + vanilla HTML/CSS/JS** (no frameworks). Patients book appointments by department/doctor; admins manage users, departments, doctors, schedules, time slots, appointments and announcements.
 
+> Final-year project. Runs locally on XAMPP. Timezone: East Africa Time (`Africa/Dar_es_Salaam`).
 
+---
+
+## How it works (architecture)
+
+```
+Browser (pages/*.html + js/main.js)
+        │  fetch() / form POST  →  JSON
+        ▼
+PHP endpoints (php/*.php)  ── require config.php (DB + session) ──►  MySQL (hams2_db)
+```
+
+- **Frontend**: static HTML pages in `pages/`. Each page loads its data on open by calling a PHP endpoint with `fetch()` and rendering the JSON. Shared helpers live in `js/main.js`.
+- **Backend**: one PHP file per action (e.g. `get_slots.php`, `book_appointment.php`). Every endpoint includes `php/config.php`, which defines DB constants, starts the session, configures error logging and creates the `$pdo` connection.
+- **Auth**: session-based. `php/session_check.php` guards pages/endpoints and checks the user's role (`patient` / `admin`).
+- **Login is by phone number + password** (it was originally email; see `php/apply_phone_login_migration.php`).
+- **Caching**: simple file cache in `php/cache.php`, stored in `cache/`.
+- **Audit**: admin actions are logged via `php/audit_log.php`.
 
 ## Features
 
-### For Patients
-- Self-registration with email verification
-- Book appointments by department
-- View appointment history
-- Book for family members
-- Cancel appointments
-- Real-time slot availability
+**Patients**
+- Register and log in (phone + password)
+- Book an appointment: department → doctor → date/slot → confirm
+- View/filter appointment history, cancel pending/confirmed ones (frees the slot)
+- Manage family members and book on their behalf
+- Edit profile, see announcements
 
-### For Admins
-- User management (patients and admins)
-- Department management
-- Time slot management
-- Appointment overview and status management
-- Dashboard with statistics
-- Auto-refreshing data
+**Admins**
+- Dashboard with statistics and today's appointments
+- Manage users, departments and doctors
+- **Schedules**: weekly schedule templates, holidays and doctor exceptions; generate time slots from templates (`admin-schedules.html`)
+- Manage time slots manually
+- View and update appointment status
+- Post/delete announcements
+- View audit log
 
-## Database Schema
-
-The system uses MySQL/MariaDB with the following tables:
-
-- `users` - Patient and admin accounts
-- `departments` - Hospital departments
-- `time_slots` - Available appointment slots by department
-- `appointments` - Booked appointments
-- `family_profiles` - Family member profiles for booking
-- `login_attempts` - Security monitoring
-
-## Installation
-
-### Prerequisites
-- PHP 7.4 or higher
-- MySQL/MariaDB
-- Web server (Apache/Nginx)
-- XAMPP (recommended for Windows)
-
-### Setup Instructions
-
-1. **Copy the project**
-   - Place the `hams2` folder in your web server's document root (e.g., `C:\xampp\htdocs\hams2`)
-
-2. **Start your database server**
-   - In XAMPP, open the control panel and start **MySQL**.
-   - If you installed MySQL/MariaDB separately, make sure the service is running on port `3306`.
-
-3. **Create the database**
-   ```bash
-   # Import the SQL schema
-   mysql -u root -p < hams2_database_schema.sql
-   ```
-   Or use phpMyAdmin to import `hams2_database_schema.sql`
-
-3. **Configure database connection**
-   - Edit `php/config.php` if needed (default: root/empty password, database: hams2_db)
-
-4. **Access the application**
-   - Patient registration: `http://localhost/hams2/pages/register.html`
-   - Login: `http://localhost/hams2/index.html`
-   - Admin dashboard: `http://localhost/hams2/pages/admin-dashboard.html`
-
-### Default Admin Credentials
-- **Email**: admin@hams2.com
-- **Password**: admin123
-
-⚠️ **Important**: Change the default admin password in production!
-
-## Project Structure
+## Project structure
 
 ```
-hams2/
-├── css/
-│   └── style.css          # Main stylesheet
-├── js/
-│   └── main.js            # Shared JavaScript functions
-├── pages/
-│   ├── index.html         # Login page
-│   ├── register.html      # Patient registration
-│   ├── dashboard.html     # Patient dashboard
-│   ├── book.html          # Appointment booking
-│   ├── appointments.html  # Patient appointment history
-│   ├── family.html        # Family member management
-│   ├── profile.html       # Patient profile
-│   ├── admin-dashboard.html
-│   ├── admin-users.html
-│   ├── admin-departments.html
-│   ├── admin-slots.html
-│   └── admin-appointments.html
+├── index.html            # Landing / entry page
+├── css/                  # style.css, responsive.css
+├── js/                   # main.js (shared helpers), responsive.js
+├── images/
+├── pages/                # All UI pages (patient + admin-*.html)
+│   └── pages_xplanation.md   # Plain-language description of every page
 ├── php/
-│   ├── config.php         # Database configuration
-│   ├── login.php          # Login handler
-│   ├── register.php       # Registration handler
-│   ├── logout.php         # Logout handler
-│   ├── session_check.php  # Session validation
-│   ├── get_departments.php
-│   ├── get_slots.php
-│   ├── book_appointment.php
-│   ├── cancel_appointment.php
-│   ├── get_appointments.php
-│   ├── get_family.php
-│   ├── save_family.php
-│   ├── get_profile.php
-│   ├── save_profile.php
-│   ├── admin_get_stats.php
-│   ├── admin_get_users.php
-│   ├── admin_save_user.php
-│   ├── admin_get_departments.php
-│   ├── admin_save_department.php
-│   ├── admin_get_slots.php
-│   ├── admin_save_slots.php
-│   ├── admin_get_appointments.php
-│   ├── admin_update_appointment.php
-│   ├── admin_get_today.php
-│   └── cache.php
-├── cache/                  # File-based cache
-└── hams2_database_schema.sql
+│   ├── config.php        # DB credentials, session, error log, $pdo  ← edit this
+│   ├── session_check.php # Auth/role guard
+│   ├── login.php / register.php / logout.php
+│   ├── get_*.php, book_appointment.php, ...   # Patient endpoints
+│   ├── admin_*.php                            # Admin endpoints
+│   ├── apply_*_migration.php                  # One-off DB migrations (run in browser)
+│   └── test_*.php, debug_*.php                # Dev-only test/debug scripts
+├── cache/                # File cache (generated)
+└── logs/php_errors.log   # PHP error log (generated)
 ```
 
-## Security Features
+Naming convention: `admin_` prefix = admin-only endpoint; `get_` = read (GET); `save_` / `update_` / `delete_` = write (POST).
 
-- Password hashing with bcrypt
-- SQL injection protection via prepared statements
-- CSRF protection via session tokens
-- Rate limiting on login attempts
-- IP-based and email-based login throttling
-- Session management with secure cookies
-- Input sanitization and validation
+## Database tables
 
-## Time Zone
+`users`, `departments`, `doctors`, `time_slots`, `appointments`, `family_profiles`, `schedule_templates`, `holidays`, `doctor_exceptions`, `announcements`, `audit_log`, `login_attempts`.
 
-The system is configured for **East Africa Time (EAT)** - `Africa/Dar_es_Salaam`. To change this, edit `php/config.php`:
+> ⚠️ The SQL schema file is **not** included in this repo yet. Export it from phpMyAdmin (`hams2_db` → Export) and commit it as `hams2_database_schema.sql` so others can set up the project.
 
-```php
-date_default_timezone_set('Africa/Dar_es_Salaam');
-```
+## Local setup
 
-## API Endpoints
+1. Install **XAMPP** (PHP 7.4+, MySQL/MariaDB) and start **Apache** and **MySQL**.
+2. Clone into the web root:
+   ```bash
+   cd C:\xampp\htdocs
+   git clone https://github.com/Api-cmd/health-appointment-system.git hams2
+   ```
+3. Create the database `hams2_db` and import the schema (phpMyAdmin → Import, or):
+   ```bash
+   mysql -u root -p hams2_db < hams2_database_schema.sql
+   ```
+4. Run the migrations once in the browser (if your schema is older):
+   - `http://localhost/hams2/php/apply_doctor_id_migration.php`
+   - `http://localhost/hams2/php/apply_time_slots_migration.php`
+   - `http://localhost/hams2/php/apply_phone_login_migration.php`
+5. Check `php/config.php` — defaults are `root` / empty password, DB `hams2_db`, `APP_URL = http://localhost/hams2`.
+6. Open `http://localhost/hams2/` and log in.
 
-### Patient Endpoints
-- `POST /php/login.php` - User login
-- `POST /php/register.php` - Patient registration
-- `GET /php/get_departments.php` - Get departments
-- `GET /php/get_slots.php?dept_id=X&date=YYYY-MM-DD` - Get available slots
-- `POST /php/book_appointment.php` - Book appointment
-- `POST /php/cancel_appointment.php` - Cancel appointment
-- `GET /php/get_appointments.php` - Get patient appointments
-- `GET /php/get_family.php` - Get family profiles
-- `POST /php/save_family.php` - Save family profile
+## Debugging tips
 
-### Admin Endpoints
-- `GET /php/admin_get_stats.php` - Dashboard statistics
-- `GET /php/admin_get_users.php` - Get all users
-- `POST /php/admin_save_user.php` - Create/update user
-- `GET /php/admin_get_departments.php` - Get departments
-- `POST /php/admin_save_department.php` - Create/update department
-- `GET /php/admin_get_slots.php` - Get time slots
-- `POST /php/admin_save_slots.php` - Create/update slots
-- `GET /php/admin_get_appointments.php` - Get all appointments
-- `POST /php/admin_update_appointment.php` - Update appointment status
-- `GET /php/admin_get_today.php` - Get today's appointments
+- PHP errors go to `logs/php_errors.log` (not the browser).
+- Open the browser DevTools → Network tab to see the JSON each endpoint returns.
+- `php/test_*.php` scripts can be opened directly in the browser to test DB queries.
+- Clear `cache/` if data looks stale.
 
-## Browser Support
+## Security
 
-- Chrome/Edge (latest)
-- Firefox (latest)
-- Safari (latest)
+- Passwords hashed with bcrypt (`password_hash`)
+- PDO prepared statements everywhere
+- Login rate limiting by IP and phone (`login_attempts` table)
+- HttpOnly session cookies, strict session mode, 2-hour lifetime
+
+**Before deploying anywhere public:** change DB credentials, change the default admin password, and delete `test_*.php`, `debug_*.php` and the migration scripts.
 
 ## License
 
-This project is provided as-is for educational and commercial use.
-
-## Support
-
-For issues or questions, refer to the code comments or contact the development team.
+Educational project — provided as-is.

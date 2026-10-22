@@ -39,23 +39,23 @@
 
       <!--
         The form sends data to php/login.php when submitted.
-        method="POST" means the email/password go in the
+        method="POST" means the phone/password go in the
         request body — NOT visible in the URL (safer than GET).
       -->
       <form id="login-form" action="../php/login.php" method="POST" novalidate>
 
-        <!-- Email field -->
+        <!-- Phone field -->
         <div class="form-group">
-          <label for="email">Email Address</label>
+          <label for="phone">Phone Number</label>
           <div class="input-icon-wrap">
-            <span class="icon"><i class="fas fa-envelope"></i></span>
+            <span class="icon"><i class="fas fa-phone"></i></span>
             <input
-              type="email"
-              id="email"
-              name="email"
+              type="tel"
+              id="phone"
+              name="phone"
               class="form-control"
-              placeholder="yourname@email.com"
-              autocomplete="email"
+              placeholder="+255712345678"
+              autocomplete="tel"
               required
             >
           </div>
@@ -154,7 +154,7 @@
         'registered'            : { type: 'success', text: 'Registration successful! You can now log in.' },
         'login_required'        : { type: 'info',    text: 'Please log in to access that page.' },
         'access_denied'         : { type: 'error',   text: 'You do not have permission to access that page.' },
-        'login_failed'          : { type: 'error',   text: 'Invalid email or password. Please try again.' },
+        'login_failed'          : { type: 'error',   text: 'Invalid phone number or password. Please try again.' },
         'too_many_attempts_ip'  : { type: 'error',   text: 'Too many login attempts from your IP address. Please wait 10 minutes before trying again.' },
         'too_many_attempts_email': { type: 'error',   text: 'Too many failed attempts for this account. Please wait 10 minutes before trying again.' },
       };
@@ -180,15 +180,15 @@
     // It gives the user instant feedback without a page reload.
     // PHP also validates on the server — both are needed.
     document.getElementById('login-form').addEventListener('submit', function (e) {
-      const email    = document.getElementById('email').value.trim();
+      const phone    = document.getElementById('phone').value.trim();
       const password = document.getElementById('password').value.trim();
       const box      = document.getElementById('alert-box');
 
       // Simple check: are both fields filled?
-      if (!email || !password) {
+      if (!phone || !password) {
         e.preventDefault();  // Stop the form from submitting to PHP
         box.className     = 'alert alert-error';
-        box.textContent   = 'Please enter your email and password.';
+        box.textContent   = 'Please enter your phone number and password.';
         box.style.display = 'block';
         return;
       }

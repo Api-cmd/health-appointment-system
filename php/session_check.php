@@ -24,7 +24,7 @@ if (is_logged_in()) {
         'user_id'   => $_SESSION['user_id'],
         'name'      => $_SESSION['user_name'],
         'role'      => $_SESSION['user_role'],
-        'email'     => $_SESSION['user_email'],
+        'phone'     => $_SESSION['user_phone'],
     ]);
 } else {
     send_json(['logged_in' => false]);

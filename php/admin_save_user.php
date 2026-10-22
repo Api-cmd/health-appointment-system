@@ -23,11 +23,11 @@ $phone    = clean($body['phone']    ?? '');
 $role     = clean($body['role']     ?? 'patient');
 $password = $body['password']       ?? '';
 
-if (!$name || !$email || !$phone) {
-    send_json(['error' => 'Name, email, and phone are required.'], 400);
+if (!$name || !$phone) {
+    send_json(['error' => 'Name and phone are required.'], 400);
 }
 
-if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+if (!empty($email) && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
     send_json(['error' => 'Invalid email address.'], 400);
 }
 
@@ -41,17 +41,17 @@ if ($user_id) {
         // Update including new password
         $hashed = password_hash($password, PASSWORD_DEFAULT);
         $stmt   = $pdo->prepare("
-            UPDATE users SET full_name=?, email=?, phone=?, role=?, password=?
+            UPDATE users SET full_name=?, phone=?, email=?, role=?, password=?
             WHERE user_id=?
         ");
-        $stmt->execute([$name, $email, $phone, $role, $hashed, $user_id]);
+        $stmt->execute([$name, $phone, $email ?: 'no-email@hams.local', $role, $hashed, $user_id]);
     } else {
         // Update without changing password
         $stmt = $pdo->prepare("
-            UPDATE users SET full_name=?, email=?, phone=?, role=?
+            UPDATE users SET full_name=?, phone=?, email=?, role=?
             WHERE user_id=?
         ");
-        $stmt->execute([$name, $email, $phone, $role, $user_id]);
+        $stmt->execute([$name, $phone, $email ?: 'no-email@hams.local', $role, $user_id]);
     }
 
 } else {
@@ -60,19 +60,19 @@ if ($user_id) {
         send_json(['error' => 'Password must be at least 8 characters.'], 400);
     }
 
-    // Check email is not already taken
-    $check = $pdo->prepare("SELECT user_id FROM users WHERE email = ?");
-    $check->execute([$email]);
+    // Check phone is not already taken
+    $check = $pdo->prepare("SELECT user_id FROM users WHERE phone = ?");
+    $check->execute([$phone]);
     if ($check->fetch()) {
-        send_json(['error' => 'That email is already registered.'], 409);
+        send_json(['error' => 'That phone number is already registered.'], 409);
     }
 
     $hashed = password_hash($password, PASSWORD_DEFAULT);
     $stmt   = $pdo->prepare("
-        INSERT INTO users (full_name, email, phone, password, role)
+        INSERT INTO users (full_name, phone, email, password, role)
         VALUES (?, ?, ?, ?, ?)
     ");
-    $stmt->execute([$name, $email, $phone, $hashed, $role]);
+    $stmt->execute([$name, $phone, $email ?: 'no-email@hams.local', $hashed, $role]);
 }
 
 send_json(['success' => true]);

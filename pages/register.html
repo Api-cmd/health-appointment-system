@@ -50,18 +50,7 @@
           </div>
         </div>
 
-        <!-- Email -->
-        <div class="form-group">
-          <label for="email">Email Address</label>
-          <div class="input-icon-wrap">
-            <i class="fa-solid fa-envelope icon"></i>
-            <input type="email" id="email" name="email"
-                   class="form-control" placeholder="yourname@email.com"
-                   autocomplete="email" required>
-          </div>
-        </div>
-
-        <!-- Phone -->
+        <!-- Phone Number -->
         <div class="form-group">
           <label for="phone">Phone Number</label>
           <div class="input-icon-wrap">
@@ -218,7 +207,6 @@
     // --- Client-side form validation before submitting to PHP ---
     document.getElementById('register-form').addEventListener('submit', function (e) {
       const name     = document.getElementById('full_name').value.trim();
-      const email    = document.getElementById('email').value.trim();
       const phone    = document.getElementById('phone').value.trim();
       const password = document.getElementById('password').value;
       const confirm  = document.getElementById('confirm').value;
@@ -227,7 +215,6 @@
       const errors = [];
 
       if (name.length < 2)        errors.push('Full name is required.');
-      if (!email.includes('@'))   errors.push('Enter a valid email address.');
       if (phone.length < 9)       errors.push('Enter a valid phone number.');
       if (password.length < 8)    errors.push('Password must be at least 8 characters.');
       if (password !== confirm)   errors.push('Passwords do not match.');
